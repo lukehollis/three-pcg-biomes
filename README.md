@@ -1,0 +1,48 @@
+# three-pcg-biomes
+
+`three-pcg-biomes` is the Three.js rendering layer for biome worlds built on `three-pcg-framework`. It provides terrain helpers, instanced mesh creation, and a first-person controller while delegating PCG-style generation primitives to the framework package.
+
+Use `three-pcg-framework` to define local biome caches, generators, root asset tables, filters, recursive child transforms, and global priority merging. Use `three-pcg-biomes` when those generated points need to become Three.js terrain and instanced renderable objects.
+
+```ts
+import {
+  BiomeFirstPersonController,
+  BiomeTerrain,
+  createVolumeCache,
+  runGlobalBiomeCore,
+  runLocalBiomeCore,
+  surfaceScatter
+} from "three-pcg-biomes";
+
+const cache = createVolumeCache({
+  id: "forest-volume",
+  bounds: { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }
+});
+
+const local = runLocalBiomeCore({
+  id: "forest",
+  priority: 0,
+  cache,
+  surface,
+  rng,
+  generators: [
+    {
+      id: "trees",
+      type: "tree",
+      priority: 0,
+      generator: surfaceScatter({ id: "tree-surface", count: 500 })
+    }
+  ],
+  assets: [{ id: "oak", generatorType: "tree", bounds: { type: "sphere", radius: 3 } }]
+});
+
+const { byAsset } = runGlobalBiomeCore([local]);
+
+const controller = new BiomeFirstPersonController({
+  domElement: renderer.domElement,
+  camera,
+  heightAt: (x, z) => terrain.heightAt(x, z)
+});
+```
+
+Priority merging follows the PCG Biome Core convention implemented by `three-pcg-framework`: lower biome and generator priority values win, equal priorities can overlap, and `allowOverlap` bypasses the difference pass.

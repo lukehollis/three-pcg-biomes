@@ -1,0 +1,35 @@
+{
+  "name": "three-pcg-biomes",
+  "version": "0.1.0",
+  "description": "Procedural biome generation utilities for Three.js backed by a PCG framework.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean --external three",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "three": "^0.184.0"
+  },
+  "dependencies": {
+    "three-pcg-framework": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.184.1",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3"
+  }
+}
