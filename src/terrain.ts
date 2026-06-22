@@ -116,7 +116,15 @@ export class BiomeTerrain {
       pathDistance: this.distanceToPath(x, z),
       waterDistance: this.waterDistance(x, z),
       moisture,
-      flowerField
+      flowerField,
+      attributes: {
+        radial,
+        pathDistance: this.distanceToPath(x, z),
+        waterDistance: this.waterDistance(x, z),
+        moisture,
+        flowerField,
+        slope: 1 - Math.max(0, Math.min(1, normal.dot(UP)))
+      }
     };
   }
 

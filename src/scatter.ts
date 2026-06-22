@@ -111,7 +111,9 @@ export function createInstancedGroup(model: BiomeModel, placements: BiomePlaceme
         quaternion.copy(yaw);
       }
       scale.copy(placement.scale).multiplyScalar(model.normalizeScale);
-      matrix.compose(placement.position, quaternion, scale);
+      const position = placement.position.clone();
+      position.y -= model.baseY * scale.y;
+      matrix.compose(position, quaternion, scale);
       instanced.setMatrixAt(index, matrix);
     }
     instanced.instanceMatrix.needsUpdate = true;
@@ -126,9 +128,11 @@ export function createClonePlacement(model: BiomeModel, placement: BiomePlacemen
   clone.name = `BiomePlacement_${model.asset.id}`;
   const yaw = new THREE.Quaternion().setFromAxisAngle(UP, placement.rotationY);
   const quaternion = placement.normal ? new THREE.Quaternion().setFromUnitVectors(UP, placement.normal).multiply(yaw) : yaw;
+  const scale = placement.scale.clone().multiplyScalar(model.normalizeScale);
   clone.position.copy(placement.position);
+  clone.position.y -= model.baseY * scale.y;
   clone.quaternion.copy(quaternion);
-  clone.scale.multiply(placement.scale).multiplyScalar(model.normalizeScale);
+  clone.scale.multiply(scale);
   return clone;
 }
 

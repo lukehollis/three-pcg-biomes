@@ -98,6 +98,7 @@ export interface TerrainSample {
   waterDistance: number;
   moisture: number;
   flowerField: number;
+  attributes?: Record<string, number>;
 }
 
 export interface CreateBiomeOptions {

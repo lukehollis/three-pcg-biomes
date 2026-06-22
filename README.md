@@ -2,13 +2,14 @@
 
 `three-pcg-biomes` is the Three.js rendering layer for biome worlds built on `three-pcg-framework`. It provides terrain helpers, instanced mesh creation, and a first-person controller while delegating PCG-style generation primitives to the framework package.
 
-Use `three-pcg-framework` to define local biome caches, generators, root asset tables, filters, recursive child transforms, and global priority merging. Use `three-pcg-biomes` when those generated points need to become Three.js terrain and instanced renderable objects.
+Use `three-pcg-framework` to define PCG graphs, tagged data, local biome caches, generators, root asset tables, filters, recursive child transforms, and global priority merging. Use `three-pcg-biomes` when those generated points need to become Three.js terrain and instanced renderable objects. The graph executor and UE-style node registry are re-exported here for apps that want one import surface.
 
 ```ts
 import {
   BiomeFirstPersonController,
   BiomeTerrain,
   createVolumeCache,
+  runPCGGraph,
   runGlobalBiomeCore,
   runLocalBiomeCore,
   surfaceScatter
