@@ -23,17 +23,27 @@ export {
   createVolumeCache,
   defaultPCGNodeRegistry,
   differenceByPriority,
+  duplicatePatternTransform,
   emptyData,
   getInputData,
   getInputPoints,
+  jitterTransform,
+  offsetTransform,
   paramData,
   PCGNodeRegistry,
   pointData,
+  pointSet,
+  poissonSurfaceScatter,
+  ringScatter,
   runPCGGraph,
   runGlobalBiomeCore,
   runLocalBiomeCore,
+  scatterAroundParentTransform,
   spatialData,
-  surfaceData
+  splineScatter,
+  surfaceData,
+  surfaceSampler,
+  textureScatter
 } from "three-pcg-framework";
 export type {
   PCGDataKind,

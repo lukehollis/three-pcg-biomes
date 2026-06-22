@@ -383,6 +383,8 @@ export class MeadowMaterialFactory {
         name: `MeadowFoliage_${key}`,
         map: this.texture(texturePath),
         color: tint,
+        emissive: tint,
+        emissiveIntensity: key.includes("grass") ? 0.22 : 0.14,
         roughness: 0.88,
         metalness: 0,
         side: THREE.DoubleSide,
@@ -440,7 +442,7 @@ export class MeadowMaterialFactory {
 }
 
 export class MeadowAssetLoader {
-  private readonly fbxLoader = new FBXLoader();
+  private readonly fbxLoader: FBXLoader;
   private readonly descriptors: Map<string, BiomeAssetDescriptor>;
   private readonly modelPromises = new Map<string, Promise<BiomeModel>>();
 
@@ -448,6 +450,9 @@ export class MeadowAssetLoader {
     readonly pack: BiomePack,
     private readonly materials: MeadowMaterialFactory
   ) {
+    const manager = new THREE.LoadingManager();
+    manager.setURLModifier((url) => this.rewriteFbxTextureUrl(url));
+    this.fbxLoader = new FBXLoader(manager);
     this.descriptors = assetMap(pack);
   }
 
@@ -513,6 +518,15 @@ export class MeadowAssetLoader {
       baseY: Number.isFinite(bounds.min.y) ? bounds.min.y : 0,
       normalizeScale
     };
+  }
+
+  private rewriteFbxTextureUrl(url: string): string {
+    if (/\.fbx($|\?)/i.test(url) || url.startsWith("data:") || url.startsWith("blob:")) {
+      return url;
+    }
+    const rawName = decodeURIComponent(url.split(/[\\/]/).pop()?.split("?")[0] ?? "").toLowerCase();
+    const texture = FBX_TEXTURE_REDIRECTS.get(rawName) ?? fallbackFbxTexture(rawName);
+    return texture ? textureUrl(this.pack, texture) : url;
   }
 }
 
@@ -1076,4 +1090,43 @@ function bushTexture(hint: string): string {
     return "Plants/leafPatch_04.tga";
   }
   return "Plants/leafPatch_01.tga";
+}
+
+const FBX_TEXTURE_REDIRECTS = new Map<string, string>([
+  ["grass_01.tga", "Plants/Grass_01.tga"],
+  ["grass_mid_01.tga", "Plants/Grass_Mid_01.tga"],
+  ["grass_short_01.tga", "Plants/Grass_Short_01.tga"],
+  ["groundcover_01.tga", "Plants/GroundCover_01.tga"],
+  ["flowers_flat_01.tga", "Plants/FlowersFlat_01.tga"],
+  ["flowersflat_01.tga", "Plants/FlowersFlat_01.tga"],
+  ["wildflowers_01.tga", "Plants/WildFlowers_01.tga"],
+  ["wildflowers_02.tga", "Plants/WildFlowers_02.tga"],
+  ["wildflowers_03.tga", "Plants/WildFlowers_03.tga"],
+  ["sunflower_01.tga", "LOD_Cards/Sunflower_01.tga"],
+  ["lillypads_medows_01.tga", "Plants/LillyPads_Medows_01.tga"],
+  ["base_tree_branch_alpha.tga", "Plants/Branches_01.tga"],
+  ["branches_01.tga", "Plants/Branches_01.tga"],
+  ["branches_02.tga", "Plants/Branches_02.tga"],
+  ["treebirch_01.tga", "LOD_Cards/treeBirch_01.tga"],
+  ["treebirch_02.tga", "LOD_Cards/treeBirch_02.tga"],
+  ["treebirch_03.tga", "LOD_Cards/treeBirch_03.tga"],
+  ["treemeadow_01.tga", "LOD_Cards/treeMeadow_01.tga"],
+  ["treemeadow_02.tga", "LOD_Cards/treeMeadow_02.tga"],
+  ["treefruit_01.tga", "LOD_Cards/treeFruit_01.tga"],
+  ["treefruit_02.tga", "LOD_Cards/treeFruit_02.tga"],
+  ["treefruit_03.tga", "LOD_Cards/treeFruit_03.tga"],
+  ["polygonnaturebiomes_meadow_texture_01.png", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["polygonnaturebiomes_texture_01_justin.psd", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["polygonnaturebiomes_texture_01_tom.png", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["polygonexplorers_texture_01_cameron.png", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["polygonancientworlds_texture_01.png", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["polygoncastle_texture_01_a.psd", "PolygonNatureBiomes_Meadow_Texture_01.png"],
+  ["ropebridge.png", "PolygonNatureBiomes_Meadow_Texture_01.png"]
+]);
+
+function fallbackFbxTexture(fileName: string): string | undefined {
+  if (!/\.(png|jpe?g|tga|psd)$/i.test(fileName)) {
+    return undefined;
+  }
+  return "Core/White.png";
 }

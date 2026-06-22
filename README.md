@@ -47,3 +47,19 @@ const controller = new BiomeFirstPersonController({
 ```
 
 Priority merging follows the PCG Biome Core convention implemented by `three-pcg-framework`: lower biome and generator priority values win, equal priorities can overlap, and `allowOverlap` bypasses the difference pass.
+
+The package also includes a Polygon Biomes Meadow adapter for the local source-art layout:
+
+```ts
+import { createMeadowBiome, createMeadowAssetLoader, meadowAssets } from "three-pcg-biomes";
+
+const world = await createMeadowBiome({
+  scene,
+  renderer,
+  camera,
+  assetBaseUrl: "/meadow-assets",
+  seed: "polygon-meadow"
+});
+```
+
+`createMeadowBiome` uses `runLocalBiomeCore`/`runGlobalBiomeCore` from `three-pcg-framework` for placement generation, then renders the accepted PCG points with the `three-pcg-biomes` terrain, asset loader, material remapping, and instancing helpers. `createMeadowAssetLoader` and `meadowAssets` are exported for inspection tools and apps that need to load individual FBX assets from the same pack.
