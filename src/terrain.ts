@@ -158,8 +158,10 @@ export class BiomeTerrain {
     let colorCursor = 0;
     for (let iz = 0; iz <= segments; iz += 1) {
       for (let ix = 0; ix <= segments; ix += 1) {
-        const x = (ix / segments - 0.5) * size;
-        const z = (iz / segments - 0.5) * size;
+        const sourceX = (ix / segments - 0.5) * size;
+        const sourceZ = (iz / segments - 0.5) * size;
+        const x = sourceX;
+        const z = sourceZ;
         const height = this.heightAt(x, z);
         positions[cursor++] = x;
         positions[cursor++] = height;
@@ -167,18 +169,19 @@ export class BiomeTerrain {
         uvs[uvCursor++] = ix / segments;
         uvs[uvCursor++] = iz / segments;
 
-        const sample = this.sampleAt(x, z);
-        const pathMix = smoothstep(this.options.pathWidth * 2.4, this.options.pathWidth * 0.35, sample.pathDistance);
+        const sample = this.sampleAt(sourceX, sourceZ);
+        const pathMix = smoothstep(this.options.pathWidth * 2.05, this.options.pathWidth * 0.3, sample.pathDistance);
         const flowerMix = smoothstep(0.12, 0.72, sample.flowerField) * (1 - pathMix);
         const edgeDry = smoothstep(0.55, 1, sample.radial);
         // Keep the default terrain palette bright enough for vertex-color shading.
-        const color = new THREE.Color("#a9c75a")
-          .lerp(new THREE.Color("#cdb784"), pathMix * 0.62)
-          .lerp(new THREE.Color("#bcd56a"), flowerMix * 0.45)
-          .lerp(new THREE.Color("#c2c179"), edgeDry * 0.22);
+        const color = new THREE.Color("#c7da5f")
+          .lerp(new THREE.Color("#dfbe80"), pathMix * 0.42)
+          .lerp(new THREE.Color("#dbe875"), flowerMix * 0.45)
+          .lerp(new THREE.Color("#cdd57b"), edgeDry * 0.15);
         colors[colorCursor++] = color.r;
         colors[colorCursor++] = color.g;
         colors[colorCursor++] = color.b;
+
       }
     }
 
@@ -207,31 +210,39 @@ export class BiomeTerrain {
     const positions: number[] = [];
     const uvs: number[] = [];
     const indices: number[] = [];
+    const curve = new THREE.CatmullRomCurve3(
+      this.pathPoints.map((point) => new THREE.Vector3(point.x, 0, point.z)),
+      false,
+      "catmullrom",
+      0.45
+    );
+    const sampleCount = Math.max(24, (this.pathPoints.length - 1) * 16);
     let distance = 0;
+    let previousPoint: THREE.Vector3 | undefined;
 
-    for (let index = 0; index < this.pathPoints.length; index += 1) {
-      const current = this.pathPoints[index];
-      const previous = this.pathPoints[Math.max(0, index - 1)];
-      const next = this.pathPoints[Math.min(this.pathPoints.length - 1, index + 1)];
-      if (!current || !previous || !next) {
-        continue;
+    for (let index = 0; index <= sampleCount; index += 1) {
+      const t = index / sampleCount;
+      const current = curve.getPoint(t);
+      if (previousPoint) {
+        distance += Math.hypot(current.x - previousPoint.x, current.z - previousPoint.z);
       }
+      previousPoint = current;
 
-      if (index > 0) {
-        distance += Math.hypot(current.x - previous.x, current.z - previous.z);
-      }
-      const tangent = new THREE.Vector2(next.x - previous.x, next.z - previous.z).normalize();
+      const tangent3 = curve.getTangent(t);
+      const tangent = new THREE.Vector2(tangent3.x, tangent3.z).normalize();
       const normal = new THREE.Vector2(-tangent.y, tangent.x);
-      const left = { x: current.x + normal.x * halfWidth, z: current.z + normal.y * halfWidth };
-      const right = { x: current.x - normal.x * halfWidth, z: current.z - normal.y * halfWidth };
+      const widthNoise = fractalNoise2D(this.noise, current.x * 0.045 + 17.2, current.z * 0.045 - 28.4, 3, 2, 0.48);
+      const localHalfWidth = halfWidth * THREE.MathUtils.clamp(0.9 + widthNoise * 0.22 + Math.sin(distance * 0.13) * 0.08, 0.76, 1.14);
+      const left = { x: current.x + normal.x * localHalfWidth, z: current.z + normal.y * localHalfWidth };
+      const right = { x: current.x - normal.x * localHalfWidth, z: current.z - normal.y * localHalfWidth };
       const leftY = this.heightAt(left.x, left.z) + 0.045;
       const rightY = this.heightAt(right.x, right.z) + 0.045;
 
       positions.push(left.x, leftY, left.z, right.x, rightY, right.z);
-      uvs.push(0, distance * 0.04, 1, distance * 0.04);
+      uvs.push(0, distance * 0.026, 1, distance * 0.026);
     }
 
-    for (let index = 0; index < this.pathPoints.length - 1; index += 1) {
+    for (let index = 0; index < sampleCount; index += 1) {
       const a = index * 2;
       const b = a + 1;
       const c = a + 2;

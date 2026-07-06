@@ -104,18 +104,22 @@ export function createInstancedGroup(model: BiomeModel, placements: BiomePlaceme
       if (!placement) {
         continue;
       }
-      yaw.setFromAxisAngle(UP, placement.rotationY);
-      if (placement.normal) {
+      if (placement.quaternion) {
+        quaternion.copy(placement.quaternion);
+      } else if (placement.normal) {
+        yaw.setFromAxisAngle(UP, placement.rotationY);
         quaternion.setFromUnitVectors(UP, placement.normal).multiply(yaw);
       } else {
+        yaw.setFromAxisAngle(UP, placement.rotationY);
         quaternion.copy(yaw);
       }
-      scale.copy(placement.scale).multiplyScalar(model.normalizeScale);
+      scale.copy(placement.scale).multiplyScalar(placementScaleMultiplier(model, placement));
       const position = placement.position.clone();
-      position.y -= model.baseY * scale.y;
+      position.y -= anchorOffsetY(model, scale.y);
       matrix.compose(position, quaternion, scale);
       instanced.setMatrixAt(index, matrix);
     }
+    geometry.setAttribute("instanceWindPhase", createWindPhaseAttribute(placements));
     instanced.instanceMatrix.needsUpdate = true;
     group.add(instanced);
   }
@@ -127,13 +131,47 @@ export function createClonePlacement(model: BiomeModel, placement: BiomePlacemen
   const clone = model.object.clone(true) as THREE.Group;
   clone.name = `BiomePlacement_${model.asset.id}`;
   const yaw = new THREE.Quaternion().setFromAxisAngle(UP, placement.rotationY);
-  const quaternion = placement.normal ? new THREE.Quaternion().setFromUnitVectors(UP, placement.normal).multiply(yaw) : yaw;
-  const scale = placement.scale.clone().multiplyScalar(model.normalizeScale);
+  const quaternion = placement.quaternion
+    ? placement.quaternion
+    : placement.normal
+      ? new THREE.Quaternion().setFromUnitVectors(UP, placement.normal).multiply(yaw)
+      : yaw;
+  const scale = placement.scale.clone().multiplyScalar(placementScaleMultiplier(model, placement));
   clone.position.copy(placement.position);
-  clone.position.y -= model.baseY * scale.y;
+  clone.position.y -= anchorOffsetY(model, scale.y);
   clone.quaternion.copy(quaternion);
   clone.scale.multiply(scale);
   return clone;
+}
+
+function anchorOffsetY(model: BiomeModel, scaleY: number): number {
+  return model.asset.anchor === "origin" ? 0 : model.baseY * scaleY;
+}
+
+function placementScaleMultiplier(model: BiomeModel, placement: BiomePlacement): number {
+  return placement.userData?.preserveSourceScale === true ? 1 : model.normalizeScale;
+}
+
+function createWindPhaseAttribute(placements: BiomePlacement[]): THREE.InstancedBufferAttribute {
+  const phases = new Float32Array(placements.length);
+  for (let index = 0; index < placements.length; index += 1) {
+    const placement = placements[index];
+    if (!placement) {
+      continue;
+    }
+    const provided = placement.userData?.windPhase;
+    phases[index] =
+      typeof provided === "number"
+        ? provided
+        : fract(Math.sin(placement.position.x * 12.9898 + placement.position.z * 78.233 + index * 37.719) * 43758.5453) *
+          Math.PI *
+          2;
+  }
+  return new THREE.InstancedBufferAttribute(phases, 1);
+}
+
+function fract(value: number): number {
+  return value - Math.floor(value);
 }
 
 function acceptSample(layer: ScatterLayer, sample: TerrainSample, rng: SeededRandom): boolean {

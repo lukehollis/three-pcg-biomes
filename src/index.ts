@@ -1,18 +1,14 @@
 export { BiomeWorld } from "./biome-world.js";
 export type { BiomeWorldAssetLoader, BiomeWorldMaterials } from "./biome-world.js";
 export { BiomeFirstPersonController } from "./controller.js";
-export {
-  createMeadowAssetLoader,
-  createMeadowBiome,
-  MeadowAssetLoader,
-  MeadowMaterialFactory,
-  meadowAssets,
-  meadowPack
-} from "./meadow.js";
-export type { MeadowAssetLoaderBundle } from "./meadow.js";
+export { assetMap, assetUrl, joinUrl, normalizeBaseUrl, textureUrl, withAssetBase } from "./asset-pack.js";
 export { computeSeed, computeSeedFromPosition, hashSeed, pickWeighted, SeededRandom } from "./random.js";
 export { createInstancedGroup, generateScatterPlacements, groupPlacementsByAsset, isBlocked } from "./scatter.js";
 export type { Obstacle } from "./scatter.js";
+export { splitMeshByUvSpan } from "./mesh-split.js";
+export type { UvSpanSplitResult } from "./mesh-split.js";
+export { enableBiomeWind, tickBiomeWindMaterial } from "./wind.js";
+export type { BiomeWindOptions } from "./wind.js";
 export * from "./biome/index.js";
 export {
   createCircleCache,
@@ -63,6 +59,7 @@ export type {
   PCGLocalBiomeResult,
   PCGPoint,
   PCGPointBounds,
+  PCGPointFilter,
   PCGSurface,
   PCGSurfaceSample,
   PCGTaggedData

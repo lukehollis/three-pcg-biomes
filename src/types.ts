@@ -30,6 +30,12 @@ export interface BiomeAssetDescriptor {
   sourceScale?: number;
   /** Desired real-world height in metres; instances are normalized to it. */
   targetHeight?: number;
+  /**
+   * How instances are aligned vertically at placement time.
+   * `base` anchors the lowest vertex to the sampled surface. `origin` preserves
+   * the source pivot for overlay meshes whose vertices intentionally sit above it.
+   */
+  anchor?: "base" | "origin";
   castShadow?: boolean;
   receiveShadow?: boolean;
   windStrength?: number;
@@ -51,6 +57,7 @@ export interface BiomePlacement {
   position: THREE.Vector3;
   rotationY: number;
   scale: THREE.Vector3;
+  quaternion?: THREE.Quaternion;
   normal?: THREE.Vector3;
   userData?: Record<string, unknown>;
 }
